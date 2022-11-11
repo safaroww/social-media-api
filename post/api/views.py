@@ -3,6 +3,10 @@ from rest_framework.decorators import api_view
 from .serializers import PostSerializer
 from post.models import Post
 from rest_framework import status
+from django.db.models import F
+
+
+
 
 @api_view(['GET', 'POST'])
 def post_list(request):
@@ -40,3 +44,27 @@ def post_detail(request, pk):
     elif request.method == 'DELETE':
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+@api_view(['PUT'])
+def add_like(request, pk):
+    try:
+        post = Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    
+    # sade versiya
+    # if request.method == 'PUT':
+    #     post.likes += 1
+    #     post.save()
+    #     return Response(status=status.HTTP_202_ACCEPTED)
+    
+    
+    if request.method == 'PUT':
+        post.likes = F('likes') + 1
+        post.save()
+        post.refresh_from_db()
+        serializer = PostSerializer(instance=post)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
